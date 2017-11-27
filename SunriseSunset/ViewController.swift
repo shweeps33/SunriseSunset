@@ -21,7 +21,9 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         placesClient = GMSPlacesClient.shared()
-        locationManager.requestAlwaysAuthorization()
+        locationManager.requestWhenInUseAuthorization()
+        
+        getCurrentLocation()
         
         resultsViewController = GMSAutocompleteResultsViewController()
         resultsViewController?.delegate = self
@@ -41,7 +43,10 @@ class ViewController: UIViewController {
     }
     
     @IBAction func getCurrentPlace(_ sender: UIButton) {
-        
+        getCurrentLocation()
+    }
+    
+    func getCurrentLocation() {
         placesClient.currentPlace(callback: { (placeLikelihoodList, error) -> Void in
             if let error = error {
                 print("Pick Place error: \(error.localizedDescription)")
@@ -52,7 +57,9 @@ class ViewController: UIViewController {
             if let placeLikelihoodList = placeLikelihoodList {
                 let place = placeLikelihoodList.likelihoods.first?.place
                 if let place = place {
-                    self.addressLabel.text = place.name
+                    DispatchQueue.main.async {
+                        self.addressLabel.text = place.name
+                    }
                     self.sendRequestWithCoordinates(latitude: place.coordinate.latitude, longitude: place.coordinate.longitude)
                 }
             }
@@ -112,23 +119,9 @@ class ViewController: UIViewController {
         
         CLGeocoder().reverseGeocodeLocation(location, completionHandler:
             {(placemarks, error)-> Void in
-                if let placemarks = placemarks {
-                    do {
-                        let placeMark = placemarks.last
-                        let placeDesc = placeMark?.description as NSString?
-                        let regex : NSRegularExpression = try NSRegularExpression(pattern: "\"[a-z]*\\/[a-z]*_*[a-z]*\"", options: .caseInsensitive)
-                        let newSearchString : NSTextCheckingResult? = regex.firstMatch(in: placeDesc as! String, options: NSRegularExpression.MatchingOptions(), range: NSRange(location: 2, length: ((placeDesc?.length)!-2)))
-                        let substr = placeDesc?.substring(with: (newSearchString?.range)!) as! String
-                        
-                        var str = String(substr.characters.dropLast())
-                        str = String(str.characters.dropFirst())
-                        timezoneID = str as! String
-                        
-                        DispatchQueue.main.async {
-                            self.timezoneLabel.text = timezoneID
-                        }
-                    } catch let error as NSError {
-                        print(error.localizedDescription)
+                if let placemark = placemarks?.first {
+                    DispatchQueue.main.async {
+                            self.timezoneLabel.text = placemark.timeZone?.identifier
                     }
                 } else if let error = error {
                     print("reverse geodcode fail: \(error.localizedDescription)")
