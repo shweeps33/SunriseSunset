@@ -22,8 +22,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         placesClient = GMSPlacesClient.shared()
         locationManager.requestWhenInUseAuthorization()
-        
-        getCurrentLocation()
+        locationManager.delegate = self
         
         resultsViewController = GMSAutocompleteResultsViewController()
         resultsViewController?.delegate = self
@@ -133,7 +132,7 @@ class ViewController: UIViewController {
 
 
 
-extension ViewController: GMSAutocompleteResultsViewControllerDelegate {
+extension ViewController: GMSAutocompleteResultsViewControllerDelegate, CLLocationManagerDelegate {
     func resultsController(_ resultsController: GMSAutocompleteResultsViewController,
                            didAutocompleteWith place: GMSPlace) {
         searchController?.isActive = false
@@ -153,5 +152,9 @@ extension ViewController: GMSAutocompleteResultsViewControllerDelegate {
     
     func didUpdateAutocompletePredictions(forResultsController resultsController: GMSAutocompleteResultsViewController) {
         UIApplication.shared.isNetworkActivityIndicatorVisible = false
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        getCurrentLocation()
     }
 }
